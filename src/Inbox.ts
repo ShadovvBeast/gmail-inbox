@@ -1,12 +1,11 @@
 import { gmail_v1, google } from 'googleapis';
 // support for typescript debugging (refers to ts files instead of the transpiled js files)
-import * as sourceMapSupport from 'source-map-support';
 import { formatMessage } from './formatMessage';
-import { authorizeAccount } from './GoogleAuthorizer';
+import {authorizeAccount, getAuthUrl, getToken} from './GoogleAuthorizer';
 import { InboxMethods } from './InboxMethods.interface';
 import { Label } from './Label.interface';
 import { MessageDateType, SearchQuery, UnixTimestamp } from './SearchQuery.interface';
-sourceMapSupport.install();
+import {Credentials, OAuth2Client} from "google-auth-library";
 
 export interface Message {
   messageId: string;
@@ -31,16 +30,23 @@ export interface Message {
 
 export class Inbox implements InboxMethods {
   private gmailApi: gmail_v1.Gmail = google.gmail('v1');
+  private authClient: OAuth2Client;
   private authenticated: boolean = false;
 
   constructor(private credentialsJsonPath: string, private tokenPath = 'gmail-token.json') {}
 
-  public async authenticateAccount(): Promise<void> {
-    const oAuthClient = await authorizeAccount(this.credentialsJsonPath, this.tokenPath);
-    this.gmailApi = google.gmail({ version: 'v1', auth: oAuthClient });
+  public async authenticateAccount(token?: Credentials): Promise<void> {
+    if (!token)
+      throw new Error('Must have the token from authentication flow')
+    this.authClient = await authorizeAccount(this.credentialsJsonPath, token);
+    this.gmailApi = google.gmail({ version: 'v1', auth: this.authClient });
     this.authenticated = true;
   }
 
+  public getAuthUrl = () => getAuthUrl(this.credentialsJsonPath);
+
+  public getToken = (code) => getToken(this.credentialsJsonPath, code);
+  public getProfile = () => new Promise((resolve, reject) => this.gmailApi.users.getProfile({userId: 'me'}, (errorMessage, result) => errorMessage ? reject(errorMessage) : resolve(result)));
   public async getAllLabels(): Promise<Label[]> {
     this.guardAuthentication();
     return new Promise((resolve, reject) => {
@@ -54,7 +60,7 @@ export class Inbox implements InboxMethods {
             return;
           }
 
-          resolve(result?.data.labels);
+          resolve(result?.data.labels as any);
         },
       );
     });
@@ -99,7 +105,7 @@ export class Inbox implements InboxMethods {
     return new Promise((resolve, reject) => {
       let searchString: string | undefined;
       if (typeof searchQuery === 'string' || searchQuery === undefined) {
-        searchString = searchQuery;
+        searchString = searchQuery.toString();
       } else {
         searchString = this.mapSearchQueryToSearchString(searchQuery);
       }
@@ -260,6 +266,10 @@ export class Inbox implements InboxMethods {
 
     if (searchQuery.has) {
       searchString += `has:${searchQuery.has} `;
+    }
+
+    if (searchQuery.in) {
+      searchString += `in:${searchQuery.in} `;
     }
 
     if (searchQuery.filenameExtension) {

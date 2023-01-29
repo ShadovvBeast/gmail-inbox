@@ -23,6 +23,7 @@ export interface SearchQuery {
    */
   labels?: string[];
   has?: 'attachment' | 'drive' | 'document' | 'spreadsheet' | 'youtube' | 'presentation';
+  in?: string;
   /**
    * Some possible extensions to search with, if not use "filename" property with your extension. e.g. filename: "png"
    * Note: The filenames containing the extension will also be returned. E.g. 'filenameExtension:"pdf" will also return 'not-a-pdf.jpg'
