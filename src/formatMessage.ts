@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis';
-import { Message } from './Inbox';
+import { Message } from './Inbox.js';
 
 /**
  * Method is being called by Inbox class

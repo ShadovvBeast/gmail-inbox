@@ -1,11 +1,11 @@
 import { gmail_v1, google } from 'googleapis';
 // support for typescript debugging (refers to ts files instead of the transpiled js files)
-import { formatMessage } from './formatMessage';
-import {authorizeAccount, getAuthUrl, getToken} from './GoogleAuthorizer';
-import { InboxMethods } from './InboxMethods.interface';
-import { Label } from './Label.interface';
-import { MessageDateType, SearchQuery, UnixTimestamp } from './SearchQuery.interface';
-import {Credentials, OAuth2Client} from "google-auth-library";
+import { formatMessage } from './formatMessage.js';
+import { authorizeAccount, getAuthUrl, getToken } from './GoogleAuthorizer.js';
+import { InboxMethods } from './InboxMethods.interface.js';
+import { Label } from './Label.interface.js';
+import { MessageDateType, SearchQuery, UnixTimestamp } from './SearchQuery.interface.js';
+import { Credentials, OAuth2Client } from "google-auth-library";
 
 export interface Message {
   messageId: string;
